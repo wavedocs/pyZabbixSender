@@ -11,10 +11,10 @@ import time
 import sys
 import re
 
-# If you're using an old version of python that don't have json available,
-# you can use simplejson instead: https://simplejson.readthedocs.org/en/latest/
-#import simplejson as json
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 
 class pyZabbixSender:
@@ -105,7 +105,10 @@ class pyZabbixSender:
         response_raw = sock.recv(response_len)
         sock.close()
         response = json.loads(response_raw)
-        match = re.match('^.*failed.+?(\d+).*$', response['info'].lower() if 'info' in response else '')
+        match = None
+        if 'info' in response:
+            match = re.match('^.*failed.+?(\d+).*$', response['info'].lower())
+
         if match is None:
             err_message = u'Unable to parse server response - \n%s\n' % str(response)
             sys.stderr.write(err_message)
